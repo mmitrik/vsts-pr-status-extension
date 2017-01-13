@@ -1,0 +1,105 @@
+<html>
+<head>
+    <title>Pull Request Status</title>
+    <script src="node_modules/vss-web-extension-sdk/lib/VSS.SDK.js"></script>
+    <style>
+        h2 {
+            font-weight: 400;
+        }
+
+        pre {
+            font-size: 14px;
+            line-height: 1.3em;
+        }
+
+        </style>
+</head>
+
+<body style="padding-left: 20px; padding-top: 20px; overflow-y: auto; background-color: #eee">
+    
+    <h2>Pull Request Status</h2>
+    <div id="grid-container"></div>
+    
+    <script type="text/javascript">
+        VSS.init({explicitNotifyLoaded: true, usePlatformScripts: true, usePlatformStyles: true })
+
+        VSS.ready(function () {
+            var context = VSS.getWebContext();
+
+            var configuration = VSS.getConfiguration();
+            var repoId = configuration.repositoryId;
+            var prId = configuration.pullRequestId;
+
+            //Used for tab contributions
+            if (VSS.getContribution().type === "ms.vss-web.tab") {
+                VSS.register("statusExtension", {
+                    pageTitle: function(state){
+                        return "Pull Request Status";
+                    },
+                    isDisabled: function(state) {
+                        return false;
+                    },
+                    isInvisible: function(state){
+                        return false;
+                    }
+                });
+            }
+        });
+
+        VSS.require(["VSS/Service", "TFS/VersionControl/GitRestClient", "VSS/Controls", "VSS/Controls/Grids"], 
+            function (VssService, TfsGitClient, Controls, Grids) {
+
+                //Gather the context of the current PR
+                var configuration = VSS.getConfiguration();
+                var repoId = configuration.repositoryId;
+                var prId = configuration.pullRequestId;
+                var iterations;
+
+                //Get the client
+                var gitClient = VssService.getClient(TfsGitClient.GitHttpClient);
+
+                //Get all of the statuses without iterating
+                gitClient.getPullRequestStatuses(repoId, prId).then(
+                    function(statuses) {
+
+                        //Initialize the grid
+                        var gridSource = [];
+                        var gridOptions = {
+                            height: "400px",
+                            source: gridSource,
+                            columns: [
+                                { text: "IterationID", width: 150, index: "id" },
+                                { text: "Status", width: 150, index: "status" },
+                                { text: "Name", width: 150, index: "name" },
+                                { text: "Description", width: 150, index: "description" },
+                                { text: "URL", width: 150, index: "url" },
+                            ]
+                        };
+
+                        //Create a grid to display the statuses
+                        var grid = Controls.create(Grids.Grid, $("#grid-container"), gridOptions);
+
+                        //Get the status for each iteration
+                        statuses.forEach( function(status) {
+                            //add it to the grid source
+                            gridSource.push({
+                                id: status.iterationId,
+                                status: status.state,
+                                name: status.context.name,
+                                description: status.description,
+                                url: status.targetUrl
+                            });
+
+                            //Update the grid
+                            grid.setDataSource(gridSource);
+                        });
+                    }
+                );
+
+                VSS.notifyLoadSucceeded();
+            }
+        );
+
+    </script>
+</body>
+</html>
