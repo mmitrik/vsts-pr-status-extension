@@ -80,11 +80,27 @@
                         var grid = Controls.create(Grids.Grid, $("#grid-container"), gridOptions);
 
                         //Get the status for each iteration
-                        statuses.forEach( function(status) {
+                        statuses.forEach( function(status) {                            
+                            //decode the state enum
+                            var friendlyStatus;
+                            switch(status.state){
+                                case 1:
+                                    friendlyStatus = "Pending";
+                                    break;
+                                case 2:
+                                    friendlyStatus = "Succeeded";
+                                    break;
+                                case 3:
+                                    friendlyStatus = "Failed";
+                                    break;
+                                default:
+                                    friendlyStatus = "Error";
+                            }
+                            
                             //add it to the grid source
                             gridSource.push({
                                 id: status.iterationId,
-                                status: status.state,
+                                status: friendlyStatus,
                                 name: status.context.name,
                                 description: status.description,
                                 url: status.targetUrl
