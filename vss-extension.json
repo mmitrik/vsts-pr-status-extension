@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "pr-status-extension",
-    "version": "0.1.4",
+    "version": "0.1.6",
     "name": "Pull Request Status Extension",
     "description": "Adds a new Status hub to the Pull Request details view.",
     "publisher": "ms-samples",
